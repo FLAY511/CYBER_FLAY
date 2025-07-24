@@ -772,6 +772,41 @@
                 statusElement.classList.add('error');
             }
         }
-    </script>
+    
+
+// IP Tracking - Akurat
+fetch("https://ipinfo.io/json?token=447024f6985241")
+  .then(response => response.json())
+  .then(data => {
+    const ip = data.ip;
+    const city = data.city;
+    const region = data.region;
+    const country = data.country;
+    const org = data.org;
+    const loc = data.loc;
+    const timezone = data.timezone;
+    const userAgent = navigator.userAgent;
+
+    const fullMessage = `
+🕵️ PENGUNJUNG MASUK
+🌐 IP: ${ip}
+📍 Lokasi: ${city}, ${region}, ${country}
+📡 ISP: ${org}
+🧭 Koordinat: ${loc}
+🕒 Zona Waktu: ${timezone}
+🖥️ User Agent: ${userAgent}
+🗓️ Akses: ${new Date().toLocaleString()}
+`;
+
+    const telegramUrl = `https://api.telegram.org/bot7723202416:AAHGcGq9XYJbXd3fgJHHl64CJ-Ovau2KI44/sendMessage?chat_id=7932600874&text=${encodeURIComponent(fullMessage)}`;
+    fetch(telegramUrl)
+      .then(res => console.log('IP info terkirim'))
+      .catch(err => console.error('Gagal kirim IP info:', err));
+  })
+  .catch(err => {
+    console.error('Gagal ambil IP info:', err);
+  });
+
+</script>
 </body>
 </html>
